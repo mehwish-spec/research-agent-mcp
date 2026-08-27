@@ -1,73 +1,186 @@
 # Research Agent MCP Server
 
-A production-oriented **Model Context Protocol (MCP) server** built in Go that gives AI agents access to research, information retrieval, persistent notes, automated report generation, and isolated code execution.
+A Go-based Model Context Protocol (MCP) server designed to extend AI assistants with web research, persistent research notes, full-text search, and automated Markdown report generation.
 
-The server communicates through **JSON-RPC 2.0 over stdio** and provides a collection of tools that can be consumed by MCP-compatible AI applications.
+## Overview
 
-Features
+Research Agent MCP provides a bridge between AI assistants and external research infrastructure.
 
-* Web Search — Retrieve information from the web for research workflows.
-* Persistent Notes — Store and retrieve research notes using Elasticsearch.
-* Report Generation — Convert collected research into structured Markdown reports.
-* Sandboxed Code Execution — Execute code inside isolated Docker containers.
-* Resource Controls — Apply container-level CPU and memory constraints during execution.
-* MCP Communication — JSON-RPC 2.0 communication over standard input/output.
-* Containerized Infrastructure — Docker-based deployment for reproducible environments.
-* Elasticsearch + Kibana — Persistent storage and visualization for research data.
+An AI assistant can use the MCP server to:
 
- Architecture
+- Search the web for relevant information
+- Retrieve and clean content from web pages
+- Save useful findings as structured research notes
+- Search previously stored research
+- Organize collected information by topic and tags
+- Generate a structured Markdown report from stored research
 
-                    ┌──────────────────────┐
-                    │     AI / MCP Host    │
-                    └──────────┬───────────┘
-                               │
-                         JSON-RPC / stdio
-                               │
-                    ┌──────────▼───────────┐
-                    │    MCP Go Server     │
-                    └──────────┬───────────┘
-                               │
-          ┌────────────────┼────────────────────┐
-          │                    │                    │
-          ▼                    ▼                    ▼
-     Web Search          Research Notes       Report Generator
-                              │
-                              ▼
-                       ┌─────────────┐
-                       │Elasticsearch│
-                       └──────┬──────┘
-                              │
-                              ▼
-                          Kibana UI
+The project uses Go for the MCP server, Elasticsearch for persistent research storage and search, and Docker Compose for running the complete development environment.
 
-                    ┌────────────────────┐
-                    │  Code Execution    │
-                    └─────────┬──────────┘
-                              │
-                              ▼
-                       Docker Container
-                       ┌───────────────┐
-                         Isolated Code │
-                       │   Execution   │
-                       └───────────────┘
+## Why This Project?
 
+AI assistants can reason over information provided to them, but research workflows often require multiple external steps:
 
- Technology Stack
+1. Finding relevant sources
+2. Reading web pages
+3. Extracting useful information
+4. Remembering findings across multiple research steps
+5. Searching previously collected information
+6. Converting the collected findings into a structured report
 
-| Technology         | Purpose                                |
-| ------------------ | -------------------------------------- |
-| Go                 | MCP server and backend implementation  |
-| MCP                | Tool integration with AI agents        |
-| JSON-RPC 2.0       | Communication protocol                 |
-| Elasticsearch      | Persistent research/note storage       |
-| Kibana             | Data visualization and inspection      |
-| Docker             | Isolated code execution and deployment |
-| Docker Compose     | Local multi-service orchestration      |
-| Markdown           | Generated research reports             |
+This project combines these capabilities into an MCP-compatible server so that an AI client can interact with the research system through a defined set of tools.
 
-Project Structure
+## Architecture
 
+The system consists of three primary components:
 
+### MCP Server
+
+The MCP server is implemented in Go and communicates with compatible AI clients through the Model Context Protocol.
+
+It exposes research-related tools and handles communication using JSON-RPC over standard input and output.
+
+### Elasticsearch
+
+Elasticsearch provides persistent storage for research notes.
+
+Each stored note can contain information such as:
+
+- Title
+- Content
+- Tags
+- Research metadata
+
+The stored information can later be searched using full-text queries.
+
+### Kibana
+
+Kibana provides a visual interface for inspecting and exploring the data stored in Elasticsearch.
+
+### Docker Compose
+
+Docker Compose is used to run the MCP server, Elasticsearch, and Kibana together as a development environment.
+
+## Features
+
+### Web Search
+
+The `web_search` tool searches the web and returns relevant search results.
+
+```text
+web_search(query)
+```
+
+It is useful for discovering sources related to a research topic before retrieving their full content.
+
+### Web Page Fetching
+
+The `fetch_page` tool retrieves and cleans the text content of a web page.
+
+```text
+fetch_page(url)
+```
+
+This allows the AI client to work with readable page content rather than relying only on search-result metadata.
+
+### Research Note Storage
+
+The `store_note` tool saves research findings into Elasticsearch.
+
+```text
+store_note(title, content, tags)
+```
+
+Research notes can be organized using tags, making it easier to build a searchable research knowledge base.
+
+### Research Search
+
+The `search_notes` tool performs full-text searches over previously stored research.
+
+```text
+search_notes(query)
+```
+
+This allows information collected during earlier research steps to be retrieved and reused.
+
+### Report Generation
+
+The `generate_report` tool creates a structured Markdown report from the available research notes.
+
+```text
+generate_report(topic)
+```
+
+Generated reports are written to the project's data directory.
+
+## Research Workflow
+
+A typical research workflow can be represented as:
+
+```text
+AI Assistant
+     |
+     v
+MCP Server
+     |
+     +------------------+
+     |                  |
+     v                  v
+Web Search          Stored Research
+     |                  |
+     v                  v
+Fetch Pages        Elasticsearch
+     |                  |
+     +--------+---------+
+              |
+              v
+       Research Notes
+              |
+              v
+       Report Generation
+              |
+              v
+       Markdown Report
+```
+
+For example, an AI assistant can receive a research request and perform the following sequence:
+
+```text
+1. Search for relevant sources
+2. Retrieve selected web pages
+3. Extract useful information
+4. Store important findings
+5. Search the accumulated notes
+6. Generate a structured Markdown report
+```
+
+## Technology Stack
+
+### Backend
+
+- Go
+- Model Context Protocol
+- JSON-RPC
+- HTTP-based web fetching
+
+### Storage and Search
+
+- Elasticsearch
+- Full-text search
+- Structured research notes
+
+### Observability and Data Exploration
+
+- Kibana
+
+### Infrastructure
+
+- Docker
+- Docker Compose
+
+## Project Structure
+
+```text
 research-agent-mcp/
 │
 ├── cmd/
@@ -75,9 +188,9 @@ research-agent-mcp/
 │       └── main.go
 │
 ├── internal/
-│  ├── mcp/
-│  │   └── server.go
-│  │
+│   ├── mcp/
+│   │   └── server.go
+│   │
 │   ├── storage/
 │   │   └── elasticsearch.go
 │   │
@@ -93,145 +206,306 @@ research-agent-mcp/
 ├── go.mod
 ├── go.sum
 └── README.md
+```
 
+## Directory Responsibilities
 
-Getting Started
+### `cmd/server`
 
-Prerequisites
+Contains the application's entry point.
 
-Make sure the following are installed:
+`main.go` initializes the MCP server and starts the application.
 
-* Go
-* Docker
-* Docker Compose
-* Git
+### `internal/mcp`
 
-Clone the Repository
+Contains the MCP server implementation and protocol-level handling.
 
-git clone https://github.com/mehwish-spec/research-agent-mcp.git
-cd research-agent-mcp
+### `internal/tools`
 
-Start the Services
+Contains the individual capabilities exposed through MCP.
 
+The tool implementations include:
+
+- Web page retrieval
+- Web search
+- Research note management
+- Research search
+- Report generation
+- Code execution functionality
+
+### `internal/storage`
+
+Contains Elasticsearch-related functionality, including connection and research data operations.
+
+### Docker Configuration
+
+`Dockerfile` defines the container image for the Go application.
+
+`docker-compose.yml` defines the services required to run the complete environment.
+
+## Running the Project
+
+### Prerequisites
+
+Install the following before running the project:
+
+- Go
+- Docker
+- Docker Compose
+
+Verify the installations:
+
+```bash
+go version
+docker --version
+docker compose version
+```
+
+## Run With Docker Compose
+
+Build and start the services:
+
+```bash
 docker compose up --build
+```
 
-This starts the required containerized services used by the project.
+The environment provides the following services:
 
-Run the Server
+| Service | Address |
+|---|---|
+| Elasticsearch | `http://localhost:9200` |
+| Kibana | `http://localhost:5601` |
+| MCP Server | Standard input/output |
 
-For local development:
+To stop the services:
 
+```bash
+docker compose down
+```
+
+To rebuild the containers after making code changes:
+
+```bash
+docker compose up --build
+```
+
+## Run the Go Server Locally
+
+If Elasticsearch is already running locally on port `9200`, the MCP server can also be started directly with:
+
+```bash
 go run ./cmd/server
+```
 
-MCP Tools
+The server communicates through standard input and output as required by the MCP architecture.
 
-The server exposes tools that allow an MCP-compatible AI client to perform research-related operations.
+## Connecting to an MCP Client
 
-Search
+The server can be configured as an MCP server in a compatible AI client.
 
-Search for relevant information and return results that can be used during a research workflow.
+For example, a Docker-based configuration can launch the MCP process inside the running container:
 
-Fetch
+```json
+{
+  "mcpServers": {
+    "research-agent": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "research-mcp",
+        "./mcp-server"
+      ],
+      "env": {
+        "ELASTICSEARCH_URL": "http://elasticsearch:9200"
+      }
+    }
+  }
+}
+```
 
-Retrieve content from a specified resource for further processing.
+The exact configuration path and integration method depend on the MCP client being used.
 
-Notes
+## Example Research Session
 
-Persist research notes in Elasticsearch and retrieve them when needed.
+A research request could look like:
 
-Report
+```text
+Research the advantages and disadvantages of
+microservices compared with monolithic architecture.
+Save the important findings and generate a report.
+```
 
-Generate structured Markdown reports from gathered research information.
+The research agent can then use the available tools to:
 
-Run Code
+```text
+web_search
+     |
+     v
+Find relevant sources
+     |
+     v
+fetch_page
+     |
+     v
+Extract source content
+     |
+     v
+store_note
+     |
+     v
+Save findings in Elasticsearch
+     |
+     v
+search_notes
+     |
+     v
+Retrieve relevant research
+     |
+     v
+generate_report
+     |
+     v
+Generate Markdown report
+```
 
-Execute code inside a temporary Docker-based sandbox with resource restrictions.
+## Generated Reports
 
-Sandboxed Code Execution
+Reports are generated in Markdown format.
 
-The code execution component is designed around process isolation.
+A generated report can contain:
 
-For each execution request, the system can:
+- Research topic
+- Collected findings
+- Source information
+- Organized research notes
+- Structured conclusions
 
-1. Create an ephemeral Docker container.
-2. Apply CPU and memory restrictions.
-3. Execute the requested code inside the container.
-4. Capture the execution output.
-5. Return the result.
-6. Remove the temporary execution environment.
+The generated output can then be used for further analysis, documentation, or review.
 
-This architecture keeps arbitrary code execution separated from the main application process.
+## Elasticsearch Data Layer
 
-Elasticsearch & Kibana
+Elasticsearch acts as the persistent research layer of the system.
 
-Elasticsearch provides persistent storage for research-related information such as notes and indexed content.
+Instead of keeping research findings only inside a single AI conversation, the MCP server can store notes and make them searchable.
 
-Kibana can be used to inspect and visualize the stored data during development and debugging.
+This provides several useful capabilities:
 
-The services can be started together through Docker Compose.
+- Persistent research storage
+- Full-text search
+- Tag-based organization
+- Retrieval of previously collected information
+- Reuse of research across different tasks
 
-Use Cases
+## Development
 
-This server can be used as the backend for AI-powered workflows such as:
+Install the Go dependencies:
 
-* Automated research assistants
-* Technical research
-* Information gathering
-* Research note management
-* Automated report generation
-* AI-assisted data analysis
-* Controlled code execution
-* Multi-step agent workflows
+```bash
+go mod download
+```
 
-Research Workflow
+Run the application:
 
-A typical workflow can look like:
+```bash
+go run ./cmd/server
+```
 
-User Question
-      │
-      ▼
-   AI Agent
-      │
-      ▼
-  MCP Server
-      │
-      ├── Search Web
-      │
-      ├── Fetch Information
-      │
-      ├── Save Notes
-      │
-      ├── Execute Analysis
-      │
-      └── Generate Report
-              │
-              ▼
-       Markdown Report
+Build the application:
 
-Engineering Highlights
+```bash
+go build ./...
+```
 
-* Implemented an MCP-compatible server in Go.
-* Used JSON-RPC 2.0 for structured tool communication.
-* Integrated Elasticsearch for persistent storage.
-* Containerized infrastructure with Docker.
-* Designed isolated execution environments for running code.
-* Added resource constraints for containerized workloads.
-* Organized functionality into modular MCP tools.
-* Supported automated Markdown report generation.
+Run the project's Go tests, when available:
 
-Future Improvements
+```bash
+go test ./...
+```
 
-Potential extensions include:
+## Configuration
 
-* Authentication and authorization
-* More granular container security policies
-* Additional research tools
-* Streaming tool responses
-* Improved observability and logging
-* Persistent execution history
-* Automated test coverage
-* Production deployment configuration
+The Elasticsearch connection can be configured using the environment variable:
 
-License
+```text
+ELASTICSEARCH_URL
+```
 
-See the repository license for usage and distribution terms.
+For a Docker Compose environment, the Elasticsearch service can be referenced using:
+
+```text
+http://elasticsearch:9200
+```
+
+For a local Elasticsearch installation, the URL can typically be:
+
+```text
+http://localhost:9200
+```
+
+## Design Goals
+
+The project is designed around several principles:
+
+### Tool-Based AI Interaction
+
+Instead of embedding every research capability directly into an AI application, functionality is exposed through MCP tools.
+
+This allows compatible AI clients to discover and use research capabilities through a standardized interface.
+
+### Persistent Research
+
+Research findings are stored externally in Elasticsearch rather than existing only within a temporary conversation.
+
+### Modular Components
+
+Search, fetching, storage, retrieval, and report generation are implemented as separate tools and components.
+
+### Containerized Development
+
+Docker Compose makes it possible to run the main services together without manually configuring every dependency.
+
+## Potential Extensions
+
+The architecture can be extended with additional capabilities such as:
+
+- Additional search providers
+- More advanced document extraction
+- Source credibility scoring
+- Research deduplication
+- Citation generation
+- PDF report generation
+- Additional storage backends
+- Authentication and access control
+- Background research jobs
+- Research history and versioning
+- More advanced Elasticsearch indexing
+- Automated testing and CI/CD
+
+## Limitations
+
+This project is intended primarily as a research-agent infrastructure and development project.
+
+Search quality, extracted page content, and generated reports depend on the external sources and the behavior of the configured tools.
+
+For production use, additional considerations would be required around:
+
+- Authentication
+- Rate limiting
+- Error handling
+- Security
+- Resource limits
+- Search provider reliability
+- Web content validation
+- Elasticsearch security configuration
+- Production deployment
+
+## License
+
+Add the project's license information here if a license has been selected.
+
+## Project Status
+
+This project is intended as an extensible foundation for building AI-powered research workflows with the Model Context Protocol.
+
+The architecture separates the AI-facing MCP interface from web retrieval, persistent research storage, search, and report generation, making the system suitable for further experimentation and development.
